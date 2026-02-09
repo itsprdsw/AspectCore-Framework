@@ -36,7 +36,7 @@ namespace AspectCore.Extensions.DependencyInjection
             return services;
         }
 
-        internal static IServiceCollection TryAddDynamicProxyServices(this IServiceCollection services)
+        public static IServiceCollection TryAddDynamicProxyServices(this IServiceCollection services)
         {
             if (services == null)
             {

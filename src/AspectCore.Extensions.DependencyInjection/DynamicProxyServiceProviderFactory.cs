@@ -6,21 +6,27 @@ namespace AspectCore.Extensions.DependencyInjection
     public class DynamicProxyServiceProviderFactory : IServiceProviderFactory<IServiceCollection>
     {
         private ServiceProviderOptions _serviceProviderOptions;
-
+        private Func<ServiceDescriptor, bool> _serviceValidator;
 
         public DynamicProxyServiceProviderFactory()
-            : this(null)
+            : this(null, null)
         {
         }
 
-        public DynamicProxyServiceProviderFactory(bool validateScopes)
-            : this(new ServiceProviderOptions() {ValidateScopes = validateScopes})
+        public DynamicProxyServiceProviderFactory(Func<ServiceDescriptor, bool> shouldConsiderForAopValidator)
+            : this(null, shouldConsiderForAopValidator)
         {
         }
 
-        public DynamicProxyServiceProviderFactory(ServiceProviderOptions serviceProviderOptions)
+        public DynamicProxyServiceProviderFactory(bool validateScopes, Func<ServiceDescriptor, bool> shouldConsiderForAopValidator)
+            : this(new ServiceProviderOptions() {ValidateScopes = validateScopes}, shouldConsiderForAopValidator)
+        {
+        }
+
+        public DynamicProxyServiceProviderFactory(ServiceProviderOptions serviceProviderOptions, Func<ServiceDescriptor, bool> serviceValidator)
         {
             _serviceProviderOptions = serviceProviderOptions;
+            _serviceValidator = serviceValidator;
         }
 
         public IServiceCollection CreateBuilder(IServiceCollection services)
@@ -30,9 +36,17 @@ namespace AspectCore.Extensions.DependencyInjection
 
         public IServiceProvider CreateServiceProvider(IServiceCollection containerBuilder)
         {
-            return _serviceProviderOptions == null
-                ? containerBuilder.BuildDynamicProxyProvider()
-                : containerBuilder.BuildDynamicProxyProvider(_serviceProviderOptions);
+            if (_serviceProviderOptions == null)
+            {
+                return _serviceValidator == null
+                    ? containerBuilder.BuildDynamicProxyProvider()
+                    : containerBuilder.BuildDynamicProxyProvider(_serviceValidator);
+            }
+
+            return containerBuilder.BuildDynamicProxyProvider(
+                _serviceProviderOptions,
+                _serviceValidator
+            );
         }
     }
 }
