@@ -1,14 +1,8 @@
 ﻿using System;
 using System.Reflection;
 using AspectCore.DynamicProxy;
-using AspectCore.DynamicProxy.Parameters;
 using AspectCore.Extensions.Reflection;
-using AspectCore.Configuration;
-using AspectCore.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace AspectCore.Extensions.DependencyInjection
 {
@@ -35,6 +29,16 @@ namespace AspectCore.Extensions.DependencyInjection
             return services.WeaveDynamicProxyService().BuildServiceProvider(options);
         }
 
+        public static ServiceProvider BuildDynamicProxyProvider(this IServiceCollection services, Func<ServiceDescriptor, bool> serviceValidator)
+        {
+            return services.WeaveDynamicProxyService(serviceValidator).BuildServiceProvider();
+        }
+
+        public static ServiceProvider BuildDynamicProxyProvider(this IServiceCollection services, ServiceProviderOptions options, Func<ServiceDescriptor, bool> serviceValidator)
+        {
+            return services.WeaveDynamicProxyService(serviceValidator).BuildServiceProvider(options);
+        }
+
         public static IServiceCollection WeaveDynamicProxyService(this IServiceCollection services)
         {
             if (services == null)
@@ -48,16 +52,44 @@ namespace AspectCore.Extensions.DependencyInjection
             var proxyTypeGenerator = serviceProvider.GetRequiredService<IProxyTypeGenerator>();
 
             IServiceCollection dynamicProxyServices = new ServiceCollection();
+
             foreach (var service in services)
             {
                 if (serviceValidator.TryValidate(service, out var implementationType))
+                {
                     dynamicProxyServices.Add(MakeProxyService(service, implementationType, proxyTypeGenerator));
+                }
                 else
                     dynamicProxyServices.Add(service);
             }
 
             serviceProvider.Dispose();
+            return dynamicProxyServices;
+        }
 
+        public static IServiceCollection WeaveDynamicProxyService(this IServiceCollection services, Func<ServiceDescriptor, bool> serviceValidator)
+        {
+            if (services == null)
+            {
+                throw new ArgumentNullException(nameof(services));
+            }
+            var serviceProvider = services.TryAddDynamicProxyServices().BuildServiceProvider(false);
+            var proxyTypeGenerator = serviceProvider.GetRequiredService<IProxyTypeGenerator>();
+
+            IServiceCollection dynamicProxyServices = new ServiceCollection();
+            foreach (var service in services)
+            {
+                if (!serviceValidator.Invoke(service))
+                {
+                    dynamicProxyServices.Add(service);
+                }
+                else
+                {
+                    dynamicProxyServices.Add(MakeProxyService(service, ServiceValidator.GetImplementationType(service), proxyTypeGenerator));
+                }
+            }
+
+            serviceProvider.Dispose();
             return dynamicProxyServices;
         }
 

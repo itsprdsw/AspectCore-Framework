@@ -6,16 +6,16 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace AspectCore.Extensions.DependencyInjection
 {
-    internal class ServiceValidator
+    public class ServiceValidator
     {
         private readonly IAspectValidator _aspectValidator;
 
-        internal ServiceValidator(IAspectValidatorBuilder aspectValidatorBuilder)
+        public ServiceValidator(IAspectValidatorBuilder aspectValidatorBuilder)
         {
             _aspectValidator = aspectValidatorBuilder.Build();
         }
 
-        internal bool TryValidate(ServiceDescriptor descriptor, out Type implementationType)
+        public bool TryValidate(ServiceDescriptor descriptor, out Type implementationType)
         {
             implementationType = null;
 
@@ -63,7 +63,7 @@ namespace AspectCore.Extensions.DependencyInjection
         }
 
 
-        private Type GetImplementationType(ServiceDescriptor descriptor)
+        public static Type GetImplementationType(ServiceDescriptor descriptor)
         {
 #if NET8_0_OR_GREATER
             if (descriptor.IsKeyedService)
