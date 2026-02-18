@@ -5,6 +5,6 @@
     <VersionPatch>0</VersionPatch>
     <VersionQuality></VersionQuality>
     <VersionRevision>1</VersionRevision>
-    <VersionPrefix>$(VersionMajor).$(VersionMinor).$(VersionPatch)-r$(VersionRevision)</VersionPrefix>
+    <VersionPrefix>$(VersionMajor).$(VersionMinor).$(VersionPatch)-suite.r$(VersionRevision)</VersionPrefix>
   </PropertyGroup>
 </Project>
