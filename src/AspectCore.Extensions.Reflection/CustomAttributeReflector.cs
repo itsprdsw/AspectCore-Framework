@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -34,9 +35,12 @@ namespace AspectCore.Extensions.Reflection
             {
                 if (constructorParameter.ArgumentType.IsArray)
                 {
-                    ilGen.EmitArray(((IEnumerable<CustomAttributeTypedArgument>)constructorParameter.Value).
-                        Select(x => x.Value).ToArray(),
-                        constructorParameter.ArgumentType.GetTypeInfo().UnWrapArrayType());
+                    var elementType = constructorParameter.ArgumentType.GetTypeInfo().UnWrapArrayType();
+                    var values = ((IEnumerable)constructorParameter.Value)
+                                .Cast<CustomAttributeTypedArgument>()
+                                .Select(x => NormalizeArrayElement(x.Value, elementType))
+                                .ToArray();
+                    ilGen.EmitArray(values, elementType);
                 }
                 else
                 {
@@ -57,9 +61,12 @@ namespace AspectCore.Extensions.Reflection
                 ilGen.Emit(OpCodes.Ldloc, attributeLocal);
                 if (namedArgument.TypedValue.ArgumentType.IsArray)
                 {
-                    ilGen.EmitArray(((IEnumerable<CustomAttributeTypedArgument>)namedArgument.TypedValue.Value).
-                        Select(x => x.Value).ToArray(),
-                        namedArgument.TypedValue.ArgumentType.GetTypeInfo().UnWrapArrayType());
+                    var elementType = namedArgument.TypedValue.ArgumentType.GetTypeInfo().UnWrapArrayType();
+                    var values = ((IEnumerable)namedArgument.TypedValue.Value)
+                                .Cast<CustomAttributeTypedArgument>()
+                                .Select(x => NormalizeArrayElement(x.Value, elementType))
+                                .ToArray();
+                    ilGen.EmitArray(values, elementType);
                 }
                 else
                 {
@@ -99,6 +106,18 @@ namespace AspectCore.Extensions.Reflection
         public CustomAttributeData GetCustomAttributeData()
         {
             return _customAttributeData;
+        }
+
+        private static object NormalizeArrayElement(object value, Type elementType)
+        {
+            if (value == null) return null;
+        
+            var ti = elementType.GetTypeInfo();
+            if (!ti.IsEnum) return value;
+        
+            if (elementType.IsInstanceOfType(value)) return value;
+        
+            return Enum.ToObject(elementType, value);
         }
     }
 }

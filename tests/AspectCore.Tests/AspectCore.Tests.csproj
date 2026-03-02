@@ -30,5 +30,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\AspectCore.Core\AspectCore.Core.csproj" />
+    <ProjectReference Include="..\..\src\AspectCore.Extensions.DependencyInjection\AspectCore.Extensions.DependencyInjection.csproj" />
   </ItemGroup>
 </Project>
